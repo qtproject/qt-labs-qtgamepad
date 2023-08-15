@@ -1,38 +1,5 @@
-/****************************************************************************
-**
-** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
-**
-** This file is part of the Qt Gamepad module
-**
-** $QT_BEGIN_LICENSE:LGPL3$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see http://www.qt.io/terms-conditions. For further
-** information use the contact form at http://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPLv3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl.html.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or later as published by the Free
-** Software Foundation and appearing in the file LICENSE.GPL included in
-** the packaging of this file. Please review the following information to
-** ensure the GNU General Public License version 2.0 requirements will be
-** met: http://www.gnu.org/licenses/gpl-2.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2024 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qgamepad.h"
 
@@ -47,69 +14,40 @@ class QGamepadPrivate : public QObjectPrivate
 public:
     QGamepadPrivate(int deviceId)
         : deviceId(deviceId)
-        , connected(false)
-        , axisLeftX(0.0)
-        , axisLeftY(0.0)
-        , axisRightX(0.0)
-        , axisRightY(0.0)
-        , buttonA(false)
-        , buttonB(false)
-        , buttonX(false)
-        , buttonY(false)
-        , buttonL1(false)
-        , buttonR1(false)
-        , buttonL2(0.0)
-        , buttonR2(0.0)
-        , buttonSelect(false)
-        , buttonStart(false)
-        , buttonL3(false)
-        , buttonR3(false)
-        , buttonUp(false)
-        , buttonDown(false)
-        , buttonLeft(false)
-        , buttonRight(false)
-        , buttonCenter(false)
-        , buttonGuide(false)
     {
     }
 
-    QGamepadManager *gamepadManager;
-
-    int deviceId;
-    bool connected;
+    int deviceId = -1;
+    bool connected = false;
     QString name;
-    double axisLeftX;
-    double axisLeftY;
-    double axisRightX;
-    double axisRightY;
-    bool buttonA;
-    bool buttonB;
-    bool buttonX;
-    bool buttonY;
-    bool buttonL1;
-    bool buttonR1;
-    double buttonL2;
-    double buttonR2;
-    bool buttonSelect;
-    bool buttonStart;
-    bool buttonL3;
-    bool buttonR3;
-    bool buttonUp;
-    bool buttonDown;
-    bool buttonLeft;
-    bool buttonRight;
-    bool buttonCenter;
-    bool buttonGuide;
+    float axisLeftX = 0.0f;
+    float axisLeftY = 0.0f;
+    float axisRightX = 0.0f;
+    float axisRightY = 0.0f;
+    bool buttonA = false;
+    bool buttonB = false;
+    bool buttonX = false;
+    bool buttonY = false;
+    bool buttonL1 = false;
+    bool buttonR1 = false;
+    float buttonL2 = 0.0f;
+    float buttonR2 = 0.0f;
+    bool buttonSelect = false;
+    bool buttonStart = false;
+    bool buttonL3 = false;
+    bool buttonR3 = false;
+    bool buttonUp = false;
+    bool buttonDown = false;
+    bool buttonLeft = false;
+    bool buttonRight = false;
+    bool buttonGuide = false;
 
     void setConnected(bool isConnected);
     void setName(const QString &name);
 
-    void _q_handleGamepadConnected(int id);
-    void _q_handleGamepadNameChanged(int id, const QString &name);
-    void _q_handleGamepadDisconnected(int id);
-    void _q_handleGamepadAxisEvent(int id, QGamepadManager::GamepadAxis axis, double value);
-    void _q_handleGamepadButtonPressEvent(int id, QGamepadManager::GamepadButton button, double value);
-    void _q_handleGamepadButtonReleaseEvent(int id, QGamepadManager::GamepadButton button);
+    void _q_handleGamepadConnectionChangedEvent(int index, bool isConnected);
+    void _q_handleGamepadAxisEvent(int device, JoyAxis axis, float value);
+    void _q_handleGamepadButtonEvent(int device, JoyButton button, bool isPressed);
 };
 
 void QGamepadPrivate::setConnected(bool isConnected)
@@ -117,7 +55,7 @@ void QGamepadPrivate::setConnected(bool isConnected)
     Q_Q(QGamepad);
     if (connected != isConnected) {
         connected = isConnected;
-        emit q->connectedChanged(connected);
+        emit q->connectedChanged();
     }
 }
 
@@ -126,244 +64,133 @@ void QGamepadPrivate::setName(const QString &theName)
     Q_Q(QGamepad);
     if (name != theName) {
         name = theName;
-        emit q->nameChanged(name);
+        emit q->nameChanged();
     }
 }
 
 /*!
  * \internal
  */\
-void QGamepadPrivate::_q_handleGamepadConnected(int id)
+void QGamepadPrivate::_q_handleGamepadConnectionChangedEvent(int index, bool isConnected)
 {
-    if (id == deviceId) {
-        setConnected(true);
-    }
+    if (index == deviceId)
+        setConnected(isConnected);
 }
 
 /*!
  * \internal
  */\
-void QGamepadPrivate::_q_handleGamepadNameChanged(int id, const QString &name)
-{
-    if (id == deviceId)
-        setName(name);
-}
-
-/*!
- * \internal
- */\
-void QGamepadPrivate::_q_handleGamepadDisconnected(int id)
-{
-    if (id == deviceId) {
-        setConnected(false);
-    }
-}
-
-/*!
- * \internal
- */\
-void QGamepadPrivate::_q_handleGamepadAxisEvent(int id, QGamepadManager::GamepadAxis axis, double value)
+void QGamepadPrivate::_q_handleGamepadAxisEvent(int device, JoyAxis axis, float value)
 {
     Q_Q(QGamepad);
-    if (id != deviceId)
+    if (device != deviceId)
         return;
 
     switch (axis) {
-    case QGamepadManager::AxisLeftX:
+    case JoyAxis::LeftX:
         axisLeftX = value;
-        emit q->axisLeftXChanged(value);
+        emit q->axisLeftXChanged();
         break;
-    case QGamepadManager::AxisLeftY:
+    case JoyAxis::LeftY:
         axisLeftY = value;
-        emit q->axisLeftYChanged(value);
+        emit q->axisLeftYChanged();
         break;
-    case QGamepadManager::AxisRightX:
+    case JoyAxis::RightX:
         axisRightX = value;
-        emit q->axisRightXChanged(value);
+        emit q->axisRightXChanged();
         break;
-    case QGamepadManager::AxisRightY:
+    case JoyAxis::RightY:
         axisRightY = value;
-        emit q->axisRightYChanged(value);
+        emit q->axisRightYChanged();
         break;
-    default:
-        break;
-    }
-}
-
-/*!
- * \internal
- */\
-void QGamepadPrivate::_q_handleGamepadButtonPressEvent(int id, QGamepadManager::GamepadButton button, double value)
-{
-    Q_Q(QGamepad);
-    if (id != deviceId)
-        return;
-
-    switch (button) {
-    case QGamepadManager::ButtonA:
-        buttonA = true;
-        emit q->buttonAChanged(true);
-        break;
-    case QGamepadManager::ButtonB:
-        buttonB = true;
-        emit q->buttonBChanged(true);
-        break;
-    case QGamepadManager::ButtonX:
-        buttonX = true;
-        emit q->buttonXChanged(true);
-        break;
-    case QGamepadManager::ButtonY:
-        buttonY = true;
-        emit q->buttonYChanged(true);
-        break;
-    case QGamepadManager::ButtonL1:
-        buttonL1 = true;
-        emit q->buttonL1Changed(true);
-        break;
-    case QGamepadManager::ButtonR1:
-        buttonR1 = true;
-        emit q->buttonR1Changed(true);
-        break;
-    case QGamepadManager::ButtonL2:
+    case JoyAxis::TriggerLeft:
         buttonL2 = value;
-        emit q->buttonL2Changed(value);
+        emit q->buttonL2Changed();
         break;
-    case QGamepadManager::ButtonR2:
+    case JoyAxis::TriggerRight:
         buttonR2 = value;
-        emit q->buttonR2Changed(value);
-        break;
-    case QGamepadManager::ButtonL3:
-        buttonL3 = true;
-        emit q->buttonL3Changed(true);
-        break;
-    case QGamepadManager::ButtonR3:
-        buttonR3 = true;
-        emit q->buttonR3Changed(true);
-        break;
-    case QGamepadManager::ButtonSelect:
-        buttonSelect = true;
-        emit q->buttonSelectChanged(true);
-        break;
-    case QGamepadManager::ButtonStart:
-        buttonStart = true;
-        emit q->buttonStartChanged(true);
-        break;
-    case QGamepadManager::ButtonUp:
-        buttonUp = true;
-        emit q->buttonUpChanged(true);
-        break;
-    case QGamepadManager::ButtonDown:
-        buttonDown = true;
-        emit q->buttonDownChanged(true);
-        break;
-    case QGamepadManager::ButtonLeft:
-        buttonLeft = true;
-        emit q->buttonLeftChanged(true);
-        break;
-    case QGamepadManager::ButtonRight:
-        buttonRight = true;
-        emit q->buttonRightChanged(true);
-        break;
-    case QGamepadManager::ButtonCenter:
-        buttonCenter = true;
-        emit q->buttonCenterChanged(true);
-        break;
-    case QGamepadManager::ButtonGuide:
-        buttonGuide = true;
-        emit q->buttonGuideChanged(true);
+        emit q->buttonR2Changed();
         break;
     default:
         break;
     }
-
 }
 
 /*!
  * \internal
  */\
-void QGamepadPrivate::_q_handleGamepadButtonReleaseEvent(int id, QGamepadManager::GamepadButton button)
+void QGamepadPrivate::_q_handleGamepadButtonEvent(int device, JoyButton button, bool isPressed)
 {
     Q_Q(QGamepad);
-    if (id != deviceId)
+    if (device != deviceId)
         return;
 
     switch (button) {
-    case QGamepadManager::ButtonA:
-        buttonA = false;
-        emit q->buttonAChanged(false);
+    case JoyButton::A:
+        buttonA = isPressed;
+        emit q->buttonAChanged();
         break;
-    case QGamepadManager::ButtonB:
-        buttonB = false;
-        emit q->buttonBChanged(false);
+    case JoyButton::B:
+        buttonB = isPressed;
+        emit q->buttonBChanged();
         break;
-    case QGamepadManager::ButtonX:
-        buttonX = false;
-        emit q->buttonXChanged(false);
+    case JoyButton::X:
+        buttonX = isPressed;
+        emit q->buttonXChanged();
         break;
-    case QGamepadManager::ButtonY:
-        buttonY = false;
-        emit q->buttonYChanged(false);
+    case JoyButton::Y:
+        buttonY = isPressed;
+        emit q->buttonYChanged();
         break;
-    case QGamepadManager::ButtonL1:
-        buttonL1 = false;
-        emit q->buttonL1Changed(false);
+    case JoyButton::LeftShoulder:
+        buttonL1 = isPressed;
+        emit q->buttonL1Changed();
         break;
-    case QGamepadManager::ButtonR1:
-        buttonR1 = false;
-        emit q->buttonR1Changed(false);
+    case JoyButton::RightShoulder:
+        buttonR1 = isPressed;
+        emit q->buttonR1Changed();
         break;
-    case QGamepadManager::ButtonL2:
-        buttonL2 = 0.0;
-        emit q->buttonL2Changed(0.0);
+    case JoyButton::LeftStick:
+        buttonL3 = isPressed;
+        emit q->buttonL3Changed();
         break;
-    case QGamepadManager::ButtonR2:
-        buttonR2 = 0.0;
-        emit q->buttonR2Changed(0.0);
+    case JoyButton::RightStick:
+        buttonR3 = isPressed;
+        emit q->buttonR3Changed();
         break;
-    case QGamepadManager::ButtonL3:
-        buttonL3 = false;
-        emit q->buttonL3Changed(false);
+    case JoyButton::Back:
+        buttonSelect = isPressed;
+        emit q->buttonSelectChanged();
         break;
-    case QGamepadManager::ButtonR3:
-        buttonR3 = false;
-        emit q->buttonR3Changed(false);
+    case JoyButton::Start:
+        buttonStart = isPressed;
+        emit q->buttonStartChanged();
         break;
-    case QGamepadManager::ButtonSelect:
-        buttonSelect = false;
-        emit q->buttonSelectChanged(false);
+    case JoyButton::DpadUp:
+        buttonUp = isPressed;
+        emit q->buttonUpChanged();
         break;
-    case QGamepadManager::ButtonStart:
-        buttonStart = false;
-        emit q->buttonStartChanged(false);
+    case JoyButton::DpadDown:
+        buttonDown = isPressed;
+        emit q->buttonDownChanged();
         break;
-    case QGamepadManager::ButtonUp:
-        buttonUp = false;
-        emit q->buttonUpChanged(false);
+    case JoyButton::DpadLeft:
+        buttonLeft = isPressed;
+        emit q->buttonLeftChanged();
         break;
-    case QGamepadManager::ButtonDown:
-        buttonDown = false;
-        emit q->buttonDownChanged(false);
+    case JoyButton::DpadRight:
+        buttonRight = isPressed;
+        emit q->buttonRightChanged();
         break;
-    case QGamepadManager::ButtonLeft:
-        buttonLeft = false;
-        emit q->buttonLeftChanged(false);
-        break;
-    case QGamepadManager::ButtonRight:
-        buttonRight = false;
-        emit q->buttonRightChanged(false);
-        break;
-    case QGamepadManager::ButtonCenter:
-        buttonCenter = false;
-        emit q->buttonCenterChanged(false);
-        break;
-    case QGamepadManager::ButtonGuide:
-        buttonGuide = false;
-        emit q->buttonGuideChanged(false);
+    case JoyButton::Guide:
+        buttonGuide = isPressed;
+        emit q->buttonGuideChanged();
         break;
     default:
         break;
     }
 }
+
 
 /*!
    \class QGamepad
@@ -390,17 +217,15 @@ void QGamepadPrivate::_q_handleGamepadButtonReleaseEvent(int id, QGamepadManager
 QGamepad::QGamepad(int deviceId, QObject *parent)
     : QObject(*new QGamepadPrivate(deviceId), parent)
 {
-    Q_D(QGamepad);
-    d->gamepadManager = QGamepadManager::instance();
-    connect(d->gamepadManager, SIGNAL(gamepadConnected(int)), this, SLOT(_q_handleGamepadConnected(int)));
-    connect(d->gamepadManager, SIGNAL(gamepadNameChanged(int, QString)), this, SLOT(_q_handleGamepadNameChanged(int, QString)));
-    connect(d->gamepadManager, SIGNAL(gamepadDisconnected(int)), this, SLOT(_q_handleGamepadDisconnected(int)));
-    connect(d->gamepadManager, SIGNAL(gamepadAxisEvent(int,QGamepadManager::GamepadAxis,double)), this, SLOT(_q_handleGamepadAxisEvent(int,QGamepadManager::GamepadAxis,double)));
-    connect(d->gamepadManager, SIGNAL(gamepadButtonPressEvent(int,QGamepadManager::GamepadButton,double)), this, SLOT(_q_handleGamepadButtonPressEvent(int,QGamepadManager::GamepadButton,double)));
-    connect(d->gamepadManager, SIGNAL(gamepadButtonReleaseEvent(int,QGamepadManager::GamepadButton)), this, SLOT(_q_handleGamepadButtonReleaseEvent(int,QGamepadManager::GamepadButton)));
+    auto* input = QUniversalInput::instance();
 
-    d->setConnected(d->gamepadManager->isGamepadConnected(deviceId));
-    d->setName(d->gamepadManager->gamepadName(deviceId));
+    connect(input, SIGNAL(joyConnectionChanged(int,bool)), this, SLOT(_q_handleGamepadConnectionChangedEvent(int, bool)));
+    connect(input, SIGNAL(joyAxisEvent(int,JoyAxis,float)), this, SLOT(_q_handleGamepadAxisEvent(int, JoyAxis, float)));
+    connect(input, SIGNAL(joyButtonEvent(int,JoyButton,bool)), this, SLOT(_q_handleGamepadButtonEvent(int, JoyButton, bool)));
+
+    Q_D(QGamepad);
+    d->setConnected(input->isJoyConnected(deviceId));
+    d->setName(input->getJoyName(deviceId));
 }
 
 QGamepad::~QGamepad()
@@ -472,13 +297,13 @@ QString QGamepad::name() const
  * The axis values range from -1.0 to 1.0.
  */
 /*!
- * \qmlproperty double Gamepad::axisLeftX
+ * \qmlproperty float Gamepad::axisLeftX
  * \readonly
  *
  * The value of the left thumbstick's X axis.
  * The axis values range from -1.0 to 1.0.
  */
-double QGamepad::axisLeftX() const
+float QGamepad::axisLeftX() const
 {
     Q_D(const QGamepad);
     return d->axisLeftX;
@@ -491,13 +316,13 @@ double QGamepad::axisLeftX() const
  * The axis values range from -1.0 to 1.0.
  */
 /*!
- * \qmlproperty double Gamepad::axisLeftY
+ * \qmlproperty float Gamepad::axisLeftY
  * \readonly
  *
  * The value of the left thumbstick's Y axis.
  * The axis values range from -1.0 to 1.0.
  */
-double QGamepad::axisLeftY() const
+float QGamepad::axisLeftY() const
 {
     Q_D(const QGamepad);
     return d->axisLeftY;
@@ -510,13 +335,13 @@ double QGamepad::axisLeftY() const
  * The axis values range from -1.0 to 1.0.
  */
 /*!
- * \qmlproperty double Gamepad::axisRightX
+ * \qmlproperty float Gamepad::axisRightX
  * \readonly
  *
  * This value of the right thumbstick's X axis.
  * The axis values range from -1.0 to 1.0.
  */
-double QGamepad::axisRightX() const
+float QGamepad::axisRightX() const
 {
     Q_D(const QGamepad);
     return d->axisRightX;
@@ -529,13 +354,13 @@ double QGamepad::axisRightX() const
  * The axis values range from -1.0 to 1.0.
  */
 /*!
- * \qmlproperty double Gamepad::axisRightY
+ * \qmlproperty float Gamepad::axisRightY
  * \readonly
  *
  * This value of the right thumbstick's Y axis.
  * The axis values range from -1.0 to 1.0.
  */
-double QGamepad::axisRightY() const
+float QGamepad::axisRightY() const
 {
     Q_D(const QGamepad);
     return d->axisRightY;
@@ -663,14 +488,14 @@ bool QGamepad::buttonR1() const
  * when pressed completely.
  */
 /*!
- * \qmlproperty double Gamepad::buttonL2
+ * \qmlproperty float Gamepad::buttonL2
  * \readonly
  *
  * The value of the left trigger button.
  * This trigger value ranges from 0.0 when not pressed to 1.0
  * when pressed completely.
  */
-double QGamepad::buttonL2() const
+float QGamepad::buttonL2() const
 {
     Q_D(const QGamepad);
     return d->buttonL2;
@@ -684,14 +509,14 @@ double QGamepad::buttonL2() const
  * when pressed completely.
  */
 /*!
- * \qmlproperty double Gamepad::buttonR2
+ * \qmlproperty float Gamepad::buttonR2
  * \readonly
  *
  * The value of the right trigger button.
  * This trigger value ranges from 0.0 when not pressed to 1.0
  * when pressed completely.
  */
-double QGamepad::buttonR2() const
+float QGamepad::buttonR2() const
 {
     Q_D(const QGamepad);
     return d->buttonR2;
@@ -858,25 +683,6 @@ bool QGamepad::buttonRight() const
 }
 
 /*!
- * \property QGamepad::buttonCenter
- *
- * The state of the center button.
- * The value is \c true when pressed, and \c false when not pressed.
- */
-/*
- * \qmlproperty bool Gamepad::buttonCenter
- * \readonly
- *
- * The state of the center button.
- * The value is \c true when pressed, and \c false when not pressed.
- */
-bool QGamepad::buttonCenter() const
-{
-    Q_D(const QGamepad);
-    return d->buttonCenter;
-}
-
-/*!
  * \property QGamepad::buttonGuide
  *
  * The state of the guide button.
@@ -905,8 +711,10 @@ void QGamepad::setDeviceId(int number)
     Q_D(QGamepad);
     if (d->deviceId != number) {
         d->deviceId = number;
-        emit deviceIdChanged(number);
-        d->setConnected(d->gamepadManager->isGamepadConnected(d->deviceId));
+        emit deviceIdChanged();
+        auto input = QUniversalInput::instance();
+        d->setName(input->getJoyName(d->deviceId));
+        d->setConnected(input->isJoyConnected(d->deviceId));
     }
 }
 
