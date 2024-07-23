@@ -14,5 +14,4 @@ qt_internal_add_qml_module(QuickUniversalInput
         Qt::Quick
         Qt::QuickPrivate
         Qt::UniversalInput
-    GENERATE_CPP_EXPORTS
 )

@@ -14,5 +14,4 @@ qt_internal_add_qml_module(QuickGamepad
         Qt::GamepadPrivate
         Qt::Quick
         Qt::QuickPrivate
-    GENERATE_CPP_EXPORTS
 )

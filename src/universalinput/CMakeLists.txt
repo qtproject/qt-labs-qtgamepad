@@ -26,7 +26,6 @@ qt_internal_add_module(UniversalInput
     PRIVATE_MODULE_INTERFACE
         Qt::CorePrivate
         Qt::GuiPrivate
-    GENERATE_CPP_EXPORTS
 )
 
 set_source_files_properties(../3rdparty/sdlgamecontrollerdb/gamecontrollerdb.txt PROPERTIES

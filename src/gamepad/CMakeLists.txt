@@ -16,5 +16,4 @@ qt_internal_add_module(Gamepad
     PRIVATE_MODULE_INTERFACE
         Qt::CorePrivate
         Qt::GuiPrivate
-    GENERATE_CPP_EXPORTS
 )
