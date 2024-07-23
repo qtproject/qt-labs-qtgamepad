@@ -6,6 +6,7 @@
 
 #include <QtCore/QObject>
 #include <QtGamepad/qtgamepadexports.h>
+#include <QtUniversalInput/quniversalinput.h>
 
 QT_BEGIN_NAMESPACE
 
